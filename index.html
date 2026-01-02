@@ -1,0 +1,228 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>SGPA Calculator</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg,#667eea,#764ba2);
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  margin:0;
+}
+
+.container{
+  background:#fff;
+  width:480px;
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.3);
+  text-align:center;
+}
+
+/* HEADINGS */
+h1{
+  margin:5px 0;
+  font-size:22px;
+  color:#2c3e50;
+}
+
+h2{
+  margin:3px 0;
+  font-size:18px;
+  color:#34495e;
+}
+
+.credit{
+  font-size:12px;
+  color:#7f8c8d;
+  margin-bottom:10px;
+  font-style:italic;
+}
+
+/* INPUT & SELECT */
+input, select{
+  width:100%;
+  padding:8px;
+  margin-top:8px;
+  font-size:16px;
+  font-weight:bold;
+  border:1px solid #ccc;
+  border-radius:6px;
+
+  -webkit-appearance:none;
+  appearance:none;
+  text-align:left;
+}
+
+/* SUBJECT BOX */
+.subject{
+  background:#f4f6f7;
+  margin-top:8px;
+  padding:8px;
+  border-radius:6px;
+  text-align:left;
+}
+
+.sub-name{
+  font-weight:bold;
+  color:#2c3e50;
+}
+
+.sub-credit{
+  font-size:13px;
+  color:#555;
+  margin-bottom:5px;
+}
+
+/* BUTTON */
+button{
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+  background:#27ae60;
+  color:white;
+  border:none;
+  font-size:16px;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+button:hover{
+  background:#1e8449;
+}
+
+#res{
+  margin-top:12px;
+  font-size:18px;
+  font-weight:bold;
+  color:#c0392b;
+}
+
+/* ===== MOBILE OPTIMIZATION ===== */
+@media (max-width:600px){
+  body{align-items:flex-start;padding-top:20px;}
+  .container{width:95vw;padding:18px;}
+  h1{font-size:24px;}
+  h2{font-size:18px;}
+}
+
+/* ===== PRINT / PDF (ONE PAGE) ===== */
+@media print{
+  body{background:#fff;display:block;}
+  .container{width:100%;box-shadow:none;border-radius:0;padding:10px;}
+  button{display:none;}
+  *{page-break-inside:avoid;}
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- 🔹 HEADINGS -->
+<h1>RVR & JC College of Engineering</h1>
+<h2>B.Tech II Year (R24)</h2>
+<div class="credit">Created by Y24EC134 (O.P.C)</div>
+
+<!-- 🔹 CALCULATOR TITLE -->
+<h2>SGPA Calculator</h2>
+
+<input type="text" id="sname" placeholder="Enter Student Name">
+
+<select id="dept" onchange="loadSubjects()">
+<option value="">Select Department</option>
+<option value="ECE">ECE</option>
+<option value="ME">ME</option>
+<option value="CSE">CSE</option>
+<option value="CSD">CSD</option>
+<option value="EEE">EEE</option>
+<option value="IT">IT</option>
+<option value="CO">CO (IoT)</option>
+<option value="CB">CB</option>
+<option value="CE">CE</option>
+<option value="CH">CH</option>
+</select>
+
+<div id="subjects"></div>
+
+<button onclick="calc()">Calculate SGPA</button>
+<button onclick="window.print()">Download PDF</button>
+
+<div id="res"></div>
+</div>
+
+<script>
+const gradesHTML = `
+<option value="">Select Grade</option>
+<option value="10">A+</option>
+<option value="9">A</option>
+<option value="8">B</option>
+<option value="7">C</option>
+<option value="6">D</option>
+<option value="5">E</option>
+<option value="0">F</option>
+`;
+
+const data={
+ECE:[["NMPS",3],["DS Python",3],["DELD",3],["Signals",3],["Analog",3],["SEC-I",2],["DTI",2],["DS Lab",1],["DELD Lab",1.5]],
+ME:[["Material Science",3],["SOM",3],["Manufacturing",3],["Thermo",3],["Kinematics",3],["SEC-I",2],["DTI",2],["Drawing",1.5],["Modelling Lab",1]],
+CSE:[["PS & CA",3],["UHV-II",2],["DMS",3],["CO",3],["DAA",3],["OOP",3],["SEC",2],["DAA Lab",1.5],["OOP Lab",1.5]],
+CSD:[["PS & CA",3],["UHV-II",2],["DMS",3],["CO",3],["DV",3],["OOP",3],["SEC",2],["BCVS Lab",1],["DV Lab",1],["OOP Lab",1]],
+EEE:[["NMPS",3],["DSP",3],["Circuits",3],["EDC",3],["DC Machines",3],["SEC",2],["DTI",2],["DSP Lab",1],["DC Lab",1]],
+IT:[["PS & CA",3],["UHV-II",2],["DMS",3],["CO",3],["DAA",3],["OOP",3],["SEC",2],["DAA Lab",1],["OOP Lab",1]],
+CO:[["PS & CA",3],["UHV-II",2],["DMS",3],["CO",3],["DAA",3],["OOP",3],["SEC",2],["DAA Lab",1.5],["OOP Lab",1.5]],
+CB:[["Stats",3],["UHV-II",2],["COA",3],["FLAT",3],["DAA",3],["OOP",3],["SEC",2],["Stats Lab",1],["OOP Lab",1],["BCVS Lab",1]],
+CE:[["NMPS",3],["GIS",2],["Water Supply",3],["FM",3],["SOM",3],["BMC",2],["SEC",2],["DTI",2],["GIS Lab",1],["Material Lab",1]],
+CH:[["P&S",3],["Organic Chem",3],["Thermo-I",3],["Process Calc",3],["MO",3],["SEC",2],["DTI",2],["OC Lab",1],["MO Lab",1]]
+};
+
+let credits=[];
+
+function loadSubjects(){
+  const dept=document.getElementById("dept").value;
+  const box=document.getElementById("subjects");
+  box.innerHTML="";
+  credits=[];
+  if(!dept) return;
+
+  data[dept].forEach(s=>{
+    box.innerHTML+=`
+      <div class="subject">
+        <div class="sub-name">${s[0]}</div>
+        <div class="sub-credit">Credits: ${s[1]}</div>
+        <select class="g">${gradesHTML}</select>
+      </div>`;
+    credits.push(s[1]);
+  });
+}
+
+function calc(){
+  const name=document.getElementById("sname").value.trim();
+  const g=document.getElementsByClassName("g");
+
+  if(name===""){ alert("Please enter student name"); return; }
+  for(let i=0;i<g.length;i++){
+    if(g[i].value===""){ alert("Please select all grades"); return; }
+  }
+
+  let tc=0,tp=0;
+  for(let i=0;i<g.length;i++){
+    tc+=credits[i];
+    tp+=credits[i]*g[i].value;
+  }
+
+  document.getElementById("res").innerHTML=
+    `Name: <b>${name}</b><br>SGPA = <b>${(tp/tc).toFixed(2)}</b>`;
+}
+</script>
+
+</body>
+</html>
